@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from torch import Parameter
+from torch.nn import Parameter
 
 class MyMultiheadAttention(nn.Module):
     def __init__(self, embed_dim, num_heads, dropout=0., bias=True):
