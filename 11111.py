@@ -310,8 +310,7 @@ class MyTransformerDecoderLayer(nn.Module):
         self.dropout3 = nn.Dropout(dropout)
         self.activation = F.relu
 
-
-def forward(self, tgt, memory, tgt_mask=None, memory_mask=None, tgt_key_padding_mask=None,
+    def forward(self, tgt, memory, tgt_mask=None, memory_mask=None, tgt_key_padding_mask=None,
                 memory_key_padding_mask=None):
         """
         :param tgt:  解码部分的输入，形状为 [tgt_len,batch_size, embed_dim]
