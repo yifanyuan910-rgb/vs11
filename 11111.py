@@ -1,7 +1,8 @@
 import torch
 from torch import nn
 from torch.nn import Parameter
-
+from torch.nn.functional import multi_head_attention_forward
+import torch.nn.functional as F
 class MyMultiheadAttention(nn.Module):
     def __init__(self, embed_dim, num_heads, dropout=0., bias=True):
         super(MyMultiheadAttention, self).__init__()
@@ -27,3 +28,27 @@ class MyMultiheadAttention(nn.Module):
         # W_v,  embed_dim = vdim * num_heads
         self.out_proj = nn.Linear(embed_dim, embed_dim, bias=bias)
         # 最后将所有的Z组合起来的时候，也是一次性完成， embed_dim = vdim * num_heads
+
+    def forward(self, query, key, value, attn_mask=None, key_padding_mask=None):
+        """
+        在论文中，编码时query, key, value 都是同一个输入， 
+        解码时 输入的部分也都是同一个输入， 
+        解码和编码交互时 key,value指的是 memory, query指的是tgt
+        :param query: # [tgt_len, batch_size, embed_dim], tgt_len 表示目标序列的长度
+        :param key:  #  [src_len, batch_size, embed_dim], src_len 表示源序列的长度
+        :param value: # [src_len, batch_size, embed_dim], src_len 表示源序列的长度
+        :param attn_mask: # [tgt_len,src_len] or [num_heads*batch_size,tgt_len, src_len]
+                一般只在解码时使用，为了并行一次喂入所有解码部分的输入，所以要用mask来进行掩盖当前时刻之后的位置信息
+        :param key_padding_mask: [batch_size, src_len], src_len 表示源序列的长度
+        :return:
+        attn_output: [tgt_len, batch_size, embed_dim]
+        attn_output_weights: # [batch_size, tgt_len, src_len]
+        """
+        return multi_head_attention_forward(query, key, value, self.num_heads,
+                                            self.dropout, self.out_proj.weight, self.out_proj.bias,
+                                            training=self.training,
+                                            key_padding_mask=key_padding_mask,
+                                            q_proj_weight=self.q_proj_weight,
+                                            k_proj_weight=self.k_proj_weight,
+                                            v_proj_weight=self.v_proj_weight,
+                                            attn_mask=attn_mask)
